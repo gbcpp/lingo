@@ -1,0 +1,67 @@
+{
+    "name": "lingo-desktop",
+    "version": "0.1.12",
+    "description": "Cross-platform translation, local OCR and speech",
+    "private": true,
+    "author": "Lingo contributors",
+    "main": "src/main.cjs",
+    "scripts": {
+        "start": "electron .",
+        "test": "node --test test/*.test.cjs",
+        "smoke": "node scripts/smoke.cjs",
+        "prepare:ocr": "node scripts/prepare-ocr.cjs",
+        "postinstall": "npm run prepare:ocr",
+        "pack": "electron-builder --dir",
+        "dist:mac": "electron-builder --mac zip dmg",
+        "dist:win": "electron-builder --win nsis",
+        "smoke:capture": "node scripts/capture-smoke.cjs",
+        "smoke:clipboard": "node scripts/clipboard-smoke.cjs"
+    },
+    "dependencies": {
+        "pinyin-pro": "3.29.4",
+        "tesseract.js": "7.0.0"
+    },
+    "devDependencies": {
+        "@tesseract.js-data/chi_sim": "1.0.0",
+        "@tesseract.js-data/eng": "1.0.0",
+        "electron": "44.4.5",
+        "electron-builder": "26.15.3",
+        "playwright": "1.58.2"
+    },
+    "build": {
+        "appId": "com.lingo.desktop",
+        "productName": "Lingo",
+        "icon": "src/icon.png",
+        "directories": {
+            "output": "release"
+        },
+        "files": [
+            "src/**/*",
+            "package.json"
+        ],
+        "extraResources": [
+            {
+                "from": "resources/tessdata",
+                "to": "tessdata"
+            }
+        ],
+        "asarUnpack": [
+            "node_modules/**"
+        ],
+        "mac": {
+            "category": "public.app-category.productivity",
+            "extendInfo": {
+                "NSAppleEventsUsageDescription": "Lingo needs to copy selected text when you trigger selection translation.",
+                "NSScreenCaptureUsageDescription": "Lingo needs screen access for region OCR translation.",
+                "LSUIElement": true
+            }
+        },
+        "win": {
+            "target": "nsis"
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true
+        }
+    }
+}

@@ -1,0 +1,70 @@
+:root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; color: #30343c; background: #fff; font-size: 13px; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input, select, textarea { font: inherit; }
+button, select, input[type=checkbox] { cursor: pointer; }
+button { border: 0; }
+button:disabled { opacity: .4; cursor: default; }
+button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid #7564d8; outline-offset: -2px; }
+[hidden] { display: none !important; }
+.window-bar { height: 40px; display: flex; justify-content: space-between; align-items: center; padding: 0 12px; background: #f8f8fa; border-bottom: 1px solid #eeeeF2; -webkit-app-region: drag; user-select: none; position: sticky; top: 0; z-index: 2; }
+.window-bar button { -webkit-app-region: no-drag; }
+.window-bar nav { display: flex; gap: 2px; }
+.window-bar nav button { width: 30px; height: 28px; font-size: 18px; padding: 0; }
+.brand { color: #4e465f; background: transparent; font-weight: 650; padding: 4px 0; letter-spacing: .2px; }
+.brand span { color: #a4a0ad; font-size: 11px; margin-left: 8px; font-weight: 400; }
+main { padding: 12px 16px 10px; }
+header { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 18px; }
+h1 { font-size: 20px; margin: 0; font-weight: 600; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid #efeff3; }
+.languages { display: flex; align-items: center; gap: 5px; min-width: 0; }
+select { border: 1px solid #e4e4ec; background: white; border-radius: 5px; padding: 6px; color: #4a4e5b; min-width: 0; }
+.languages select { border: none; padding: 5px 2px; font-size: 12px; }
+.provider select { font-size: 11px; padding: 5px; background: #faf9fc; }
+.dot { display: none; }
+.icon { background: transparent; color: #847798; width: 25px; height: 27px; font-size: 18px; }
+.editor { overflow: hidden; }
+.source { border-bottom: 1px solid #efeff3; margin-bottom: 7px; }
+.card-heading { display: flex; justify-content: space-between; align-items: center; min-height: 28px; font-size: 11px; color: #92929e; }
+.text-button { padding: 4px 7px; border-radius: 5px; color: #86808f; background: transparent; font-size: 11px; }
+.text-button:hover, .text-button.active { background: #eeebf6; color: #6654bf; }
+textarea { display: block; width: 100%; height: 50px; min-height: 50px; max-height: 180px; resize: none; border: 0; padding: 5px 0; color: #313645; background: transparent; line-height: 1.65; font-size: 15px; overflow-y: auto; }
+textarea::placeholder { color: #b0adb8; }
+.card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 0; font-size: 10px; color: #a1a0aa; }
+.primary { background: #7564d8; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; }
+.translate-action { display: inline-flex; vertical-align: middle; }
+.translate-action .primary { border-radius: 6px 0 0 6px; }
+.translate-key-menu { position: relative; display: flex; align-items: center; justify-content: center; width: 26px; background: #7564d8; color: white; border-left: 1px solid #ffffff40; border-radius: 0 6px 6px 0; }
+.translate-key-menu:hover { background: #6552c9; }
+.translate-key-menu:focus-within { outline: 2px solid #50409d; outline-offset: 1px; }
+.translate-key-menu select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
+.primary:hover { background: #6552c9; }
+kbd { font-family: inherit; font-size: 10px; }
+.primary kbd { margin-left: 10px; opacity: .65; }
+#output { white-space: pre-wrap; overflow-wrap: anywhere; padding: 6px 0 10px; min-height: 46px; max-height: 280px; overflow-y: auto; font-size: 16px; line-height: 1.7; }
+.empty { color: #b5b1bd; font-size: 13px; }
+.toggle-row { display: flex; align-items: center; gap: 4px; color: #85808e; cursor: pointer; }
+input[type=checkbox] { accent-color: #7564d8; margin: 0 3px 0 0; }
+.status { font-size: 11px; line-height: 1.5; min-height: 17px; color: #9994a2; margin: 6px 0; overflow-wrap: anywhere; }
+.status.error, #saveStatus.error { color: #b74752; }
+footer { font-size: 10px; color: #aca8b4; line-height: 1.5; }
+.muted { color: #aaa5b2; margin-left: 6px; font-size: 10px; }
+.settings-card { border: 1px solid #e7e5ed; border-radius: 9px; padding: 16px; margin-bottom: 14px; }
+h2 { margin: 0; font-size: 14px; font-weight: 600; }
+.settings-card p { color: #93909c; font-size: 11px; line-height: 1.7; }
+.settings-card label:not(.check) { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; color: #77717f; font-size: 12px; }
+.settings-card input:not([type=checkbox]) { border: 1px solid #e0dee7; border-radius: 5px; padding: 8px; width: 100%; background: #fcfbfd; color: #424755; }
+.service-heading { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; margin-top: 14px; border-top: 1px solid #eeedf3; font-size: 12px; }
+.check { display: flex; gap: 5px; align-items: center; color: #888290; font-size: 11px; }
+.two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.note { background: #f7f5fa; padding: 8px; border-radius: 5px; }
+.secondary { background: #eeebf6; color: #7664c0; padding: 7px 10px; border-radius: 6px; font-size: 12px; }
+.save-bar { position: sticky; bottom: 0; display: flex; justify-content: space-between; align-items: center; padding: 12px 0; background: white; gap: 10px; font-size: 11px; color: #8a8493; border-top: 1px solid #eae7ef; }
+.save-bar button { flex-shrink: 0; }
+.shortcut-heading { display: flex; justify-content: space-between; align-items: center; }
+.shortcut-row { display: grid; grid-template-columns: 1fr 1.3fr 75px; gap: 10px; align-items: center; margin-top: 10px; font-size: 12px; color: #736e7e; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+.pronunciation { padding: 4px 0 7px; color: #847598; }
+#pronunciationLabel { font-size: 10px; color: #a29aa9; }
+#pronunciationText { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.65; font-size: 13px; max-height: 90px; overflow-y: auto; margin-top: 3px; }

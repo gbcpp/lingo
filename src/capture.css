@@ -1,0 +1,2 @@
+html, body { margin: 0; overflow: hidden; cursor: url("crosshair.svg") 10 10, crosshair; background: transparent; }
+canvas { display: block; width: 100vw; height: 100vh; cursor: inherit; touch-action: none; }

@@ -1,0 +1,15 @@
+node_modules/
+release/
+resources/tessdata/
+*.log
+.DS_Store
+artifacts/
+
+# Local configuration and editor files
+.env
+.env.*
+!.env.example
+*.swp
+*.swo
+*~
+/VALIDATION.md

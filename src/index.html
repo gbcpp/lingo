@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'">
+    <title>Lingo · 翻译与朗读</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="window-bar">
+        <button id="translationTab" class="brand" title="返回翻译">Lingo<span>译</span></button>
+        <nav aria-label="工具">
+            <button id="clipboardButton" class="text-button" title="翻译剪贴板" aria-label="翻译剪贴板">▤</button>
+            <button id="captureButton" class="text-button" title="截图翻译" aria-label="截图翻译">▣</button>
+            <button id="settingsTab" class="text-button" title="偏好设置" aria-label="偏好设置">⚙</button>
+            <button id="hideWindow" class="text-button" title="隐藏窗口" aria-label="隐藏窗口">×</button>
+        </nav>
+    </div>
+    <main>
+        <section id="translateView">
+            <div class="toolbar">
+                <div class="languages"><label class="sr-only" for="from">原文语言</label><select id="from"></select><button id="swap" class="icon" title="交换语言" aria-label="交换语言">⇄</button><label class="sr-only" for="to">译文语言</label><select id="to"></select></div>
+                <label class="provider"><span class="dot"></span><select id="provider" aria-label="翻译服务"><option value="baidu">百度翻译</option><option value="google">Google 翻译</option></select></label>
+            </div>
+            <article class="editor source">
+                <div class="card-heading"><span>原文</span><label class="toggle-row"><input id="programmerModeQuick" type="checkbox">程序员模式</label><div><button id="copySource" class="text-button" disabled>复制原文</button><button id="clear" class="text-button">清空</button></div></div>
+                <textarea id="input" placeholder="输入或粘贴文字，开始翻译…" spellcheck="false" aria-label="待翻译文字"></textarea>
+                <div id="pronunciation" class="pronunciation" hidden><span id="pronunciationLabel"></span><div id="pronunciationText" aria-live="polite"></div></div>
+                <div class="card-footer"><span id="count">0 / 6000 字节</span><div><button id="cancel" class="text-button" hidden>取消</button><span class="translate-action"><button id="translate" class="primary">翻译 <kbd id="enterShortcut">Enter</kbd></button><span class="translate-key-menu"><span aria-hidden="true">▾</span><select id="translateKey" aria-label="翻译与换行快捷键"><option value="enter">Enter 翻译</option><option value="modifier-enter">Command+Enter 翻译</option></select></span></span></div></div>
+            </article>
+            <article class="editor result">
+                <div class="card-heading"><span>译文 <span id="detected" class="muted"></span></span><div><button id="speak" class="text-button" disabled>◖ 朗读译文</button><button id="stop" class="text-button">停止</button><button id="copy" class="text-button" disabled>复制译文</button></div></div>
+                <div id="output" aria-live="polite"><span class="empty">译文将显示在这里</span></div>
+                <div class="card-footer"><label class="toggle-row"><input id="autoSpeakQuick" type="checkbox"><span>自动朗读原文</span></label><span id="speechSummary">朗读原文</span></div>
+            </article>
+            <p id="status" role="status" class="status">准备就绪</p>
+            <footer><span>快捷键 <kbd id="selectionShortcut"></kbd> 划词 · <kbd id="captureShortcut"></kbd> 截图</span></footer>
+        </section>
+        <section id="settingsView" hidden>
+            <header><div><h1>偏好设置</h1></div><button id="back" class="secondary">返回翻译</button></header>
+            <form id="settingsForm">
+                <div class="settings-card"><div class="shortcut-heading"><h2>快捷键</h2><button id="resetShortcuts" class="text-button" type="button">恢复默认</button></div>
+                    <p>选择修饰键与字母、数字或功能键，保存后立即生效。组合不能重复或被其他应用占用。</p>
+                    <div id="shortcutFields"></div>
+                </div>
+                <div class="settings-card"><h2>常规</h2>
+                    <p id="startupHelp">登录系统后自动启动并常驻菜单栏／托盘，不弹出翻译窗口。</p>
+                    <label class="check"><input id="startAtLogin" type="checkbox">开机自动启动</label>
+                    <p>程序员模式在翻译前将 //、/*、-、_ 等标点与符号替换为空格，保留文字、数字和换行。</p>
+                    <label class="check"><input id="programmerMode" type="checkbox">启用程序员模式</label>
+                </div>
+                <div id="dockSettings" class="settings-card"><h2>程序坞</h2><p>默认仅在菜单栏常驻。修改后保存即可生效。</p>
+                    <label class="check"><input id="showDockIcon" type="checkbox">在程序坞显示 Lingo 图标</label>
+                </div>
+                <div class="settings-card"><h2>翻译服务</h2><p>使用你自己的 API 凭据。调用额度与费用由服务商账户决定。</p>
+                    <label>默认服务<select id="defaultProvider"><option value="baidu">百度翻译</option><option value="google">Google Cloud Translation</option></select></label>
+                    <div class="service-heading"><strong>百度 · 通用文本翻译</strong><button type="button" id="baiduLink" class="text-button">申请 API ↗</button></div>
+                    <label>APP ID<input id="appId" autocomplete="off" placeholder="填写百度 APP ID"></label>
+                    <label>密钥<input id="baiduSecret" type="password" autocomplete="new-password" placeholder="填写百度密钥"></label>
+                    <label class="check"><input id="clearBaidu" type="checkbox">删除已保存的百度凭据</label>
+                    <div class="service-heading"><strong>Google · Cloud Translation Basic v2</strong><button type="button" id="googleLink" class="text-button">开通 API ↗</button></div>
+                    <label>API Key<input id="googleKey" type="password" autocomplete="new-password" placeholder="可选，需要可访问 Google API 的网络"></label>
+                    <label class="check"><input id="clearGoogle" type="checkbox">删除已保存的 Google 凭据</label>
+                    <p class="note">金山：暂未接入整句翻译。目前确认的公开接口是词典查词，不能替代通用翻译。</p>
+                </div>
+                <div class="settings-card"><h2>朗读</h2><p>使用本机系统语音，自动优先选择常规朗读声音。手选语音仅用于匹配的语言，其他语言自动匹配。</p>
+                    <label class="check"><input id="autoSpeak" type="checkbox">翻译完成后自动朗读原文</label>
+                    <div class="two-columns"><p>自动朗读固定使用原文。英文显示美式音标，中文显示带声调的拼音。</p><label>语速<select id="rate"><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1">1× 正常</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label></div>
+                    <label>语音<select id="voice"><option value="">自动匹配推荐语音</option></select></label>
+                </div>
+                <div class="settings-card"><h2>使用与权限</h2><p>划词：先在其他应用选中文字，再按快捷键。需要应用支持复制；常见文字、图片剪贴板会尽量恢复，特殊格式可能无法完整保留。</p><p>截图：可在任意屏幕或跨屏拖动框选，显示十字光标与选区边框，不显示变暗遮罩；Esc 或右键取消。本机识别中英文，识别文字随后发送至所选服务翻译。</p><p id="permissionHelp"></p><p>关闭窗口后留在菜单栏／托盘，使用菜单中的“退出”结束运行。不保存翻译历史。</p></div>
+                <div class="save-bar"><span id="saveStatus" role="status">凭据由系统密钥机制加密后存于本机</span><button id="save" class="primary" type="submit">保存设置</button></div>
+            </form>
+        </section>
+    </main>
+    <script src="text.js"></script>
+    <script src="renderer.js"></script>
+</body>
+</html>
