@@ -1,6 +1,6 @@
 # Lingo
 
-独立实现的 macOS / Windows 翻译桌面应用，参考 Bob 的快捷键使用流程，不使用 Bob 源码或 macOS 专有翻译插件。
+独立实现的 macOS / Windows 翻译桌面应用。
 
 ## 已实现
 
@@ -130,7 +130,6 @@ npm run dist:win -- --x64 --publish never
 
 ## 官方参考
 
-- [Bob 项目说明](https://github.com/ripperhe/Bob)
 - [百度通用文本翻译接口](https://api.fanyi.baidu.com/doc/23)
 - [Google Cloud Translation Basic v2](https://docs.cloud.google.com/translate/docs/reference/rest/v2/translate)
 - [金山词霸公开查词接口](https://open.iciba.com/index.php?c=wiki&t=cc)
