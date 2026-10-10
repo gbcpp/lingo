@@ -5,7 +5,7 @@ button, input, select, textarea { font: inherit; }
 button, select, input[type=checkbox] { cursor: pointer; }
 button { border: 0; }
 button:disabled { opacity: .4; cursor: default; }
-button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid #7564d8; outline-offset: -2px; }
+:focus { outline: none; }
 [hidden] { display: none !important; }
 .window-bar { height: 40px; display: flex; justify-content: space-between; align-items: center; padding: 0 12px; background: #f8f8fa; border-bottom: 1px solid #eeeeF2; -webkit-app-region: drag; user-select: none; position: sticky; top: 0; z-index: 2; }
 .window-bar button { -webkit-app-region: no-drag; }
@@ -36,7 +36,6 @@ textarea::placeholder { color: #b0adb8; }
 .translate-action .primary { border-radius: 6px 0 0 6px; }
 .translate-key-menu { position: relative; display: flex; align-items: center; justify-content: center; width: 26px; background: #7564d8; color: white; border-left: 1px solid #ffffff40; border-radius: 0 6px 6px 0; }
 .translate-key-menu:hover { background: #6552c9; }
-.translate-key-menu:focus-within { outline: 2px solid #50409d; outline-offset: 1px; }
 .translate-key-menu select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
 .primary:hover { background: #6552c9; }
 kbd { font-family: inherit; font-size: 10px; }
