@@ -13,7 +13,7 @@ window.capture.onSelection(rect => {
     context.clearRect(0, 0, innerWidth, innerHeight);
     if (!bounds || !rect) return;
     const x = rect.x - bounds.x, y = rect.y - bounds.y;
-    context.strokeStyle = '#000000';
+    context.strokeStyle = '#D0D0D0';
     context.lineWidth = 1;
     context.strokeRect(x, y, rect.width, rect.height);
 });

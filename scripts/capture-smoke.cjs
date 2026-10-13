@@ -161,7 +161,7 @@ const root = path.join(__dirname, '..');
                     return { border: read(x, y), inside: read(x, y + 10), outside: read(5, 5) };
                 }, { start, end, origin, index });
                 if (!secondOnly || index === 1) {
-                    assert.deepEqual(pixels.border.slice(0, 3), [0, 0, 0]);
+                    assert.deepEqual(pixels.border.slice(0, 3), [208, 208, 208]);
                     assert.ok(pixels.border[3] > 0);
                 }
                 assert.equal(pixels.inside[3], 0);
