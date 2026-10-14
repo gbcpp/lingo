@@ -4,6 +4,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { translate } = require('./translation.cjs');
 const { SettingsStore, validateSettings } = require('./settings.cjs');
+const { HistoryStore } = require('./history.cjs');
 const { saveShortcuts, defaultShortcuts } = require('./shortcuts.cjs');
 const { ScreenCapture } = require('./screen-capture.cjs');
 const { selectedText, Speech, loginItemState, setLoginItem } = require('./native.cjs');
@@ -11,7 +12,7 @@ const { selectedText, Speech, loginItemState, setLoginItem } = require('./native
 const smoke = process.argv.includes('--smoke-test');
 if (smoke) app.setPath('userData', path.join(require('node:os').tmpdir(), `lingo-smoke-${process.pid}`));
 const page = pathToFileURL(path.join(__dirname, 'index.html')).href;
-let window, tray, store, captureSession, ocrWorker, ocrPromise;
+let window, tray, store, history, captureSession, ocrWorker, ocrPromise;
 let currentRequest, quitting = false, selecting = false, ready = false;
 let ocrBusy = false;
 let pendingAction = null;
@@ -47,6 +48,7 @@ function show(action) {
     window.show();
     if (process.platform === 'darwin') app.focus({ steal: true });
     window.focus();
+    if (ready) send('window-shown');
     if (action) {
         if (ready) send('action', action);
         else pendingAction = action;
@@ -155,10 +157,15 @@ async function savePreferences(input) {
         }
         throw error;
     }
-    return publicPreferences();
+    const saved = publicPreferences();
+    try { history.trim(saved.historyLimit); }
+    catch { saved.historyError = '设置已保存，但历史记录裁剪失败，请检查本地历史文件和写入权限。'; }
+    return saved;
 }
 
 function setupIPC() {
+    handle('history:list', () => history.list(store.preferences.historyLimit));
+    handle('history:add', entry => history.add(entry, store.preferences.historyLimit));
     handle('settings:get', () => ({ settings: publicPreferences(), platform: process.platform, loginItemSupported: loginItemState(app).supported, defaultShortcuts, messages: startupMessages }));
     handle('settings:save', input => {
         const task = settingsQueue.then(async () => {
@@ -229,6 +236,9 @@ else {
     app.whenReady().then(async () => {
         store = new SettingsStore(app.getPath('userData'), safeStorage);
         try { await store.load(); } catch (error) { startupMessages.push(error.message); }
+        history = new HistoryStore(app.getPath('userData'));
+        try { history.load(); history.trim(store.preferences.historyLimit); }
+        catch (error) { startupMessages.push(error.message); }
         session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
         setupIPC();
         captureSession = new ScreenCapture({ onCancel: () => {}, onImage: recognizeCapture, onError: text => show({ type: 'error', text }) });

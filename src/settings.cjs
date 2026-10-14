@@ -4,7 +4,7 @@ const { defaultShortcuts, validateShortcuts } = require('./shortcuts.cjs');
 
 const defaults = {
     provider: 'baidu', from: 'auto', to: 'auto', autoSpeak: false,
-    programmerMode: false, startAtLogin: false, translateKey: 'enter',
+    programmerMode: false, startAtLogin: false, translateKey: 'enter', historyLimit: 100, historyDisplayLimit: 5,
     speakTarget: 'source', voice: '', rate: 1, showDockIcon: false, shortcuts: defaultShortcuts,
 };
 
@@ -13,6 +13,8 @@ function validateSettings(input) {
         !['source', 'translation'].includes(input.speakTarget) || typeof input.voice !== 'string' ||
         input.voice.length > 300 || !Number.isFinite(input.rate) || input.rate < 0.5 || input.rate > 2 ||
         (input.translateKey !== undefined && !['enter', 'modifier-enter'].includes(input.translateKey)) ||
+        (input.historyLimit !== undefined && (!Number.isInteger(input.historyLimit) || input.historyLimit < 1 || input.historyLimit > 1000)) ||
+        (input.historyDisplayLimit !== undefined && (!Number.isInteger(input.historyDisplayLimit) || input.historyDisplayLimit < 1 || input.historyDisplayLimit > 100)) ||
         (input.programmerMode !== undefined && typeof input.programmerMode !== 'boolean') ||
         (input.startAtLogin !== undefined && typeof input.startAtLogin !== 'boolean') ||
         (input.showDockIcon !== undefined && typeof input.showDockIcon !== 'boolean')) {
@@ -20,6 +22,8 @@ function validateSettings(input) {
     }
     return { ...defaults, provider: input.provider, autoSpeak: input.autoSpeak,
         translateKey: input.translateKey ?? 'enter',
+        historyLimit: input.historyLimit ?? 100,
+        historyDisplayLimit: input.historyDisplayLimit ?? 5,
         programmerMode: input.programmerMode ?? false, startAtLogin: input.startAtLogin ?? false,
         speakTarget: 'source', voice: input.voice, rate: input.rate, showDockIcon: input.showDockIcon ?? false, shortcuts: validateShortcuts(input.shortcuts) };
 }

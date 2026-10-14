@@ -7,11 +7,13 @@ const invoke = async (channel, ...args) => {
 contextBridge.exposeInMainWorld('lingo', {
     layout: input => invoke('window:layout', input), hide: () => invoke('window:hide'),
     settings: () => invoke('settings:get'), save: input => invoke('settings:save', input),
+    history: () => invoke('history:list'), saveHistory: entry => invoke('history:add', entry),
     voices: () => invoke('voices'), speak: input => invoke('speech:speak', input), stop: () => invoke('speech:stop'),
     pronunciation: input => invoke('pronunciation', input),
     translate: input => invoke('translate', input), cancel: () => invoke('translate:cancel'),
     readClipboard: () => invoke('clipboard:read'), copy: text => invoke('clipboard:write', text),
     capture: () => invoke('capture:start'), external: kind => invoke('external', kind), ready: () => invoke('ready'),
     onAction: callback => ipcRenderer.on('action', (_event, value) => callback(value)),
+    onShown: callback => ipcRenderer.on('window-shown', () => callback()),
     onProgress: callback => ipcRenderer.on('ocr-progress', (_event, value) => callback(value)),
 });

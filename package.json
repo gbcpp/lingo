@@ -1,6 +1,6 @@
 {
     "name": "lingo-desktop",
-    "version": "0.1.14",
+    "version": "0.1.15",
     "description": "Cross-platform translation, local OCR and speech",
     "private": true,
     "author": "Lingo contributors",
@@ -9,6 +9,7 @@
         "start": "electron .",
         "test": "node --test test/*.test.cjs",
         "smoke": "node scripts/smoke.cjs",
+        "smoke:history": "node scripts/history-smoke.cjs",
         "prepare:ocr": "node scripts/prepare-ocr.cjs",
         "postinstall": "npm run prepare:ocr",
         "pack": "electron-builder --dir",

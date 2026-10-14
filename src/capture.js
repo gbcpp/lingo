@@ -1,5 +1,6 @@
 const canvas = document.getElementById('screen');
 const context = canvas.getContext('2d');
+const coordinates = document.getElementById('coordinates');
 let bounds, dragging = false, composing = false;
 const point = event => ({ x: bounds.x + event.clientX, y: bounds.y + event.clientY });
 const loadImage = src => new Promise((resolve, reject) => {
@@ -9,17 +10,35 @@ const loadImage = src => new Promise((resolve, reject) => {
     image.src = src;
 });
 
-window.capture.onSelection(rect => {
+function paintSelection(rect) {
     context.clearRect(0, 0, innerWidth, innerHeight);
+    context.fillStyle = 'rgba(0, 0, 0, 0.25)';
+    context.fillRect(0, 0, innerWidth, innerHeight);
     if (!bounds || !rect) return;
     const x = rect.x - bounds.x, y = rect.y - bounds.y;
-    context.strokeStyle = '#D0D0D0';
+    context.clearRect(x, y, rect.width, rect.height);
+    if (rect.width < 1 || rect.height < 1) return;
+    context.strokeStyle = '#07C160';
     context.lineWidth = 1;
-    context.strokeRect(x, y, rect.width, rect.height);
+    context.strokeRect(x + 0.5, y + 0.5, rect.width - 1, rect.height - 1);
+}
+window.capture.onSelection(paintSelection);
+window.capture.onPointer(pointer => {
+    if (!bounds || composing) return;
+    const x = pointer.x - bounds.x, y = pointer.y - bounds.y;
+    coordinates.hidden = x < 0 || y < 0 || x >= innerWidth || y >= innerHeight;
+    if (coordinates.hidden) return;
+    coordinates.textContent = `X: ${Math.round(pointer.x)}  Y: ${Math.round(pointer.y)}`;
+    const width = coordinates.offsetWidth, height = coordinates.offsetHeight;
+    const left = x + 16 + width <= innerWidth - 4 ? x + 16 : x - width - 16;
+    const top = y + 20 + height <= innerHeight - 4 ? y + 20 : y - height - 12;
+    coordinates.style.left = `${Math.max(4, Math.min(left, innerWidth - width - 4))}px`;
+    coordinates.style.top = `${Math.max(4, Math.min(top, innerHeight - height - 4))}px`;
 });
 
 window.capture.onCompose(async plan => {
     composing = true;
+    coordinates.hidden = true;
     try {
         const cropped = document.createElement('canvas');
         cropped.width = plan.width;
@@ -57,6 +76,7 @@ document.addEventListener('contextmenu', event => { event.preventDefault(); void
     canvas.width = Math.round(innerWidth * devicePixelRatio);
     canvas.height = Math.round(innerHeight * devicePixelRatio);
     context.scale(devicePixelRatio, devicePixelRatio);
+    paintSelection();
     await window.capture.ready();
     document.body.dataset.ready = 'true';
 })().catch(() => window.capture.error());

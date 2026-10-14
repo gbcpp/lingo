@@ -21,7 +21,7 @@ function loadMain(text, error) {
     vm.runInNewContext(fs.readFileSync(filename, 'utf8') + `
         window = { getBounds: () => ({ x: 0, y: 0, width: 500, height: 360 }),
             show: () => events.push('show'), focus() {}, isDestroyed: () => false,
-            webContents: { send: (_channel, action) => events.push(action.type) } };
+            webContents: { send: (channel, action) => { if (channel === 'action') events.push(action.type); } } };
         ready = true;
         captureSession = { active: false };
         module.exports = shortcutActions;

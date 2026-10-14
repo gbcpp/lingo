@@ -7,6 +7,7 @@ const invoke = async (name, ...args) => {
 contextBridge.exposeInMainWorld('capture', {
     bounds: () => invoke('bounds'), ready: () => invoke('ready'),
     onSelection: callback => ipcRenderer.on('capture:selection', (_event, rect) => callback(rect)),
+    onPointer: callback => ipcRenderer.on('capture:pointer', (_event, point) => callback(point)),
     begin: point => invoke('begin', point), move: point => invoke('move', point),
     finish: point => invoke('finish', point), cancel: () => invoke('cancel'),
     recognize: image => invoke('recognize', image), error: () => invoke('error'),

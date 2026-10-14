@@ -94,7 +94,14 @@ const root = path.join(__dirname, '..');
             globalThis.capturePoint = { x: x + 250, y: y + 40 };
             screen.getCursorScreenPoint = () => globalThis.capturePoint;
             globalThis.captureReads = 0;
-            desktopCapturer.getSources = async () => { globalThis.captureReads++; return images.map((image, i) => ({ display_id: String(i + 1), thumbnail: nativeImage.createFromDataURL(image) })); };
+            desktopCapturer.getSources = async () => {
+                const { BrowserWindow } = load('electron');
+                if (BrowserWindow.getAllWindows().some(win => win.webContents.getURL().endsWith('/capture.html') && win.isVisible())) {
+                    throw new Error('Capture overlays must be hidden before reading the screen');
+                }
+                globalThis.captureReads++;
+                return images.map((image, i) => ({ display_id: String(i + 1), thumbnail: nativeImage.createFromDataURL(image) }));
+            };
             const load = process.getBuiltinModule('module').createRequire(app.getAppPath() + '/package.json');
             globalThis.captured = [];
             load(app.getAppPath() + '/src/ocr.cjs').createOCR = async () => ({
@@ -130,18 +137,31 @@ const root = path.join(__dirname, '..');
                     pixel: Array.from(document.querySelector('canvas').getContext('2d').getImageData(5, 5, 1, 1).data),
                     background: getComputedStyle(document.body).backgroundColor,
                     cursor: getComputedStyle(document.body).cursor,
-                    text: document.body.textContent.trim()
+                    pointerEvents: getComputedStyle(document.querySelector('#coordinates')).pointerEvents
                 }));
-                assert.deepEqual(surface.pixel, [0, 0, 0, 0]);
+                assert.deepEqual(surface.pixel, [0, 0, 0, 64]);
                 assert.equal(surface.background, 'rgba(0, 0, 0, 0)');
-                assert.match(surface.cursor, /crosshair\.svg.*10 10, crosshair/);
-                assert.equal(surface.text, '');
+                assert.equal(surface.cursor, 'default');
+                assert.equal(surface.pointerEvents, 'none');
                 const win = await application.browserWindow(overlay);
                 assert.equal(await win.evaluate(win => win.isFocusable()), true);
                 const bounds = await win.evaluate(win => win.getBounds());
                 ordered[bounds.x === origin.x ? 0 : 1] = overlay;
             }
             assert.equal(await application.evaluate(() => globalThis.captureReads), secondOnly ? 1 : 0);
+            for (const [index, overlay] of ordered.entries()) {
+                for (const local of [{ x: 1, y: 1 }, { x: 299, y: 199 }]) {
+                    const pointer = { x: origin.x + index * 300 + local.x, y: origin.y + local.y };
+                    await application.evaluate((_electron, pointer) => { globalThis.capturePoint = pointer; }, pointer);
+                    await overlay.waitForFunction(pointer => {
+                        const el = document.querySelector('#coordinates');
+                        return !el.hidden && el.textContent === `X: ${pointer.x}  Y: ${pointer.y}`;
+                    }, pointer);
+                    const position = await overlay.locator('#coordinates').boundingBox();
+                    assert.ok(position.x >= 0 && position.y >= 0 && position.x + position.width <= 300 && position.y + position.height <= 200);
+                    await ordered[1 - index].waitForFunction(() => document.querySelector('#coordinates').hidden);
+                }
+            }
             const start = { x: origin.x + (secondOnly ? 330 : 250), y: origin.y + 40 };
             const end = { x: origin.x + 380, y: origin.y + 140 };
             await application.evaluate((_electron, point) => { globalThis.capturePoint = point; }, start);
@@ -155,20 +175,29 @@ const root = path.join(__dirname, '..');
             for (const [index, overlay] of ordered.entries()) {
                 const pixels = await overlay.evaluate(({ start, end, origin, index }) => {
                     const canvas = document.querySelector('canvas'), ctx = canvas.getContext('2d');
-                    const x = Math.max(start.x - origin.x - index * 300 + 10, 10);
+                    const x = Math.min(innerWidth - 10, Math.max(start.x - origin.x - index * 300 + 10, 10));
                     const y = start.y - origin.y;
                     const read = (x, y) => Array.from(ctx.getImageData(Math.round(x * devicePixelRatio), Math.round(y * devicePixelRatio), 1, 1).data);
                     return { border: read(x, y), inside: read(x, y + 10), outside: read(5, 5) };
                 }, { start, end, origin, index });
                 if (!secondOnly || index === 1) {
-                    assert.deepEqual(pixels.border.slice(0, 3), [208, 208, 208]);
-                    assert.ok(pixels.border[3] > 0);
+                    assert.deepEqual(pixels.border, [7, 193, 96, 255]);
                 }
-                assert.equal(pixels.inside[3], 0);
-                assert.equal(pixels.outside[3], 0);
+                assert.equal(pixels.inside[3], secondOnly && index === 0 ? 64 : 0);
+                assert.deepEqual(pixels.outside, [0, 0, 0, 64]);
             }
+            await ordered[0].waitForFunction(() => document.querySelector('#coordinates').hidden);
+            await ordered[1].waitForFunction(end => {
+                const el = document.querySelector('#coordinates');
+                return !el.hidden && el.textContent === `X: ${end.x}  Y: ${end.y}`;
+            }, end);
 
             if (!secondOnly) await target.screenshot({ path: path.join(root, 'artifacts', 'capture-border-preview.png'), omitBackground: true });
+            if (secondOnly) {
+                await target.evaluate(() => { document.body.style.background = 'linear-gradient(90deg, #ffffff 50%, #202020 50%)'; });
+                await target.screenshot({ path: path.join(root, 'artifacts', 'capture-overlay-preview.png') });
+                await target.evaluate(() => { document.body.style.background = ''; });
+            }
             await target.mouse.up();
             await page.waitForFunction(() => document.querySelector('#output').textContent === '截图翻译测试');
             const result = await application.evaluate(() => globalThis.captured.at(-1));
@@ -214,6 +243,9 @@ const root = path.join(__dirname, '..');
             if (fail) await page.waitForFunction(() => document.querySelector('#status').textContent.includes('OCR 识别失败'));
             else await page.waitForFunction(() => document.querySelector('#status').textContent === '');
             assert.equal(await original.evaluate(win => win.isVisible()), fail);
+            if (fail) {
+                for (let n = 0; n < 50 && await application.evaluate(() => globalThis.mainShowCount) === 0; n++) await page.waitForTimeout(20);
+            }
             assert.equal(await application.evaluate(() => globalThis.mainShowCount), fail ? 1 : 0);
         }
         await application.evaluate(({ desktopCapturer }) => { desktopCapturer.getSources = async () => []; });
@@ -229,7 +261,7 @@ const root = path.join(__dirname, '..');
         assert.ok(failedOverlays.every(win => win.isClosed()));
         assert.equal(await application.evaluate(({ globalShortcut }) => globalShortcut.isRegistered('Escape')), false);
         assert.deepEqual(errors, []);
-        console.log('PASS: Option-only saved, real Dock show/hide, transparent focusable overlays, custom crosshair, visible cross-screen border without dimming, capture only after release, mixed-DPI cross-screen crop, second-screen crop, empty OCR without window flashes, silent cancel/zero-area selection, OCR failure reporting, cancel/error cleanup, login registration and save rollback (system login API stubbed)');
+        console.log('PASS: Option-only saved, real Dock show/hide, arrow cursor, dimmed overlays with clear selection, green cross-screen border, live coordinates with edge avoidance, overlays hidden before capture, mixed-DPI cross-screen crop, second-screen crop, empty OCR without window flashes, silent cancel/zero-area selection, OCR failure reporting, cancel/error cleanup, login registration and save rollback (system login API stubbed)');
         console.log('Physical displays available: ' + await application.evaluate(() => globalThis.realDisplayCount));
     } finally {
         await application.close();

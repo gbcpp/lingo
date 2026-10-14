@@ -20,6 +20,25 @@ const encryption = {
         return { result: Buffer.concat([cipher.update(value.subarray(28)), cipher.final()]).toString() };
     },
 };
+test('History retention defaults for old settings, validates integers and persists', async t => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'lingo-test-'));
+    t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+    const { historyLimit, historyDisplayLimit, ...legacy } = defaults;
+    assert.equal(validateSettings(legacy).historyLimit, 100);
+    assert.equal(validateSettings(legacy).historyDisplayLimit, 5);
+    for (const value of [0, -1, 1.5, 1001, '100', null]) {
+        assert.throws(() => validateSettings({ ...defaults, historyLimit: value }), /无效/);
+    }
+    for (const value of [0, -1, 1.5, 101, '5', null]) {
+        assert.throws(() => validateSettings({ ...defaults, historyDisplayLimit: value }), /无效/);
+    }
+    const store = new SettingsStore(directory, encryption);
+    await store.save({ ...defaults, historyLimit: 25, historyDisplayLimit: 8, appId: '', baiduSecret: '', googleKey: '' });
+    const loaded = new SettingsStore(directory, encryption);
+    await loaded.load();
+    assert.equal(loaded.preferences.historyLimit, 25);
+    assert.equal(loaded.preferences.historyDisplayLimit, 8);
+});
 test('Persists encrypted credentials, masks public values and preserves blank secrets', async t => {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'lingo-test-'));
     t.after(() => fs.rmSync(directory, { recursive: true, force: true }));

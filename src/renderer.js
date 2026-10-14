@@ -4,6 +4,58 @@ const languages = { auto: '自动检测', zh: '简体中文', en: '英语', ja: 
 let settings, revision = 0, result = null, speechRevision = 0;
 let ocrRevision = -1;
 let pronunciationRevision = 0, pronunciationTimer;
+let historyEntries = [], historyExpanded = false, historyRevision = 0;
+
+function renderHistory() {
+    const currentSource = $('input').value.trim();
+    const entries = historyEntries.filter(entry => entry.source.trim() !== currentSource);
+    const displayLimit = settings?.historyDisplayLimit ?? 5;
+    $('historyList').replaceChildren();
+    $('historyList').classList.toggle('expanded', historyExpanded);
+    $('historyEmpty').hidden = entries.length > 0;
+    $('historyEmpty').textContent = historyEntries.length ? '暂无其他翻译历史' : '暂无翻译历史';
+    $('toggleHistory').hidden = entries.length <= displayLimit;
+    $('toggleHistory').textContent = historyExpanded ? '收起' : `查看全部（${entries.length}）`;
+    for (const entry of entries.slice(0, historyExpanded ? entries.length : displayLimit)) {
+        const button = document.createElement('button');
+        button.className = 'history-entry';
+        button.title = `${new Date(entry.createdAt).toLocaleString()} · ${entry.provider === 'baidu' ? '百度' : 'Google'} · ${languages[entry.from] || entry.from} → ${languages[entry.to] || entry.to}\n点击查看完整翻译`;
+        for (const [className, text] of [['history-source', entry.source], ['history-arrow', '→'], ['history-translation', entry.text]]) {
+            const span = document.createElement('span');
+            span.className = className;
+            span.textContent = text;
+            button.append(span);
+        }
+        button.onclick = () => {
+            $('input').value = entry.source;
+            $('provider').value = entry.provider;
+            $('from').value = languages[entry.from] ? entry.from : 'auto';
+            $('to').value = entry.to;
+            invalidate();
+            result = { ...entry };
+            $('output').textContent = result.text;
+            $('detected').textContent = `${languages[result.from] || result.from} → ${languages[result.to] || result.to}`;
+            $('speak').disabled = $('copy').disabled = false;
+            refreshPronunciation(result.from);
+            status('已显示历史翻译');
+            document.scrollingElement.scrollTop = 0;
+        };
+        $('historyList').append(button);
+    }
+}
+async function refreshHistory() {
+    const token = ++historyRevision;
+    try {
+        const entries = await api.history();
+        if (token !== historyRevision) return;
+        historyEntries = entries;
+        renderHistory();
+    } catch (error) {
+        if (token !== historyRevision) return;
+        $('historyEmpty').hidden = false;
+        $('historyEmpty').textContent = `历史记录读取失败：${error.message}`;
+    }
+}
 
 function refreshPronunciation(language = $('from').value, delay = 0) {
     clearTimeout(pronunciationTimer);
@@ -87,6 +139,7 @@ function status(message, error = false) {
     $('status').classList.toggle('error', error);
 }
 function switchView(preferences) {
+    if (!preferences && historyExpanded) { historyExpanded = false; renderHistory(); }
     $('translateView').hidden = preferences;
     $('settingsView').hidden = !preferences;
     $('settingsTab').classList.toggle('active', preferences);
@@ -112,6 +165,7 @@ function invalidate() {
     busy(false);
     scheduleLayout();
     $('count').textContent = `${new TextEncoder().encode($('input').value).length} / 6000 字节`;
+    renderHistory();
 }
 function busy(value) {
     $('translate').disabled = value;
@@ -151,6 +205,15 @@ async function translate() {
         $('copy').disabled = false;
         status('翻译完成');
         refreshPronunciation(result.from);
+        try {
+            await api.saveHistory({ source: result.source, text: result.text, from: result.from || request.from, to: result.to, provider: request.provider });
+            historyExpanded = false;
+            await refreshHistory();
+        } catch {
+            $('historyEmpty').hidden = false;
+            $('historyEmpty').textContent = '翻译已完成，但历史记录保存失败，请检查本地文件写入权限。';
+        }
+        if (token !== revision) return;
         if (settings.autoSpeak) void speak('source');
     } catch (error) {
         if (token === revision) status(error.message, true);
@@ -177,6 +240,8 @@ function renderSettings() {
     $('showDockIcon').checked = settings.showDockIcon;
     $('programmerMode').checked = $('programmerModeQuick').checked = settings.programmerMode;
     $('startAtLogin').checked = settings.startAtLogin;
+    $('historyLimit').value = settings.historyLimit;
+    $('historyDisplayLimit').value = settings.historyDisplayLimit;
     if (settings.loginItemMessage) $('startupHelp').textContent = settings.loginItemMessage;
     $('defaultProvider').value = settings.provider;
     $('appId').value = settings.appId;
@@ -236,6 +301,7 @@ $('resetShortcuts').onclick = () => { renderShortcuts(defaultShortcuts); $('save
 $('settingsForm').onchange = () => { $('saveStatus').textContent = '有未保存的修改'; $('saveStatus').classList.remove('error'); };
 $('settingsTab').onclick = () => { renderSettings(); switchView(true); };
 $('translationTab').onclick = $('back').onclick = () => switchView(false);
+$('toggleHistory').onclick = () => { historyExpanded = !historyExpanded; renderHistory(); };
 $('baiduLink').onclick = () => api.external('baidu');
 $('googleLink').onclick = () => api.external('google');
 for (const [id, key] of [['autoSpeakQuick', 'autoSpeak'], ['programmerModeQuick', 'programmerMode'], ['translateKey', 'translateKey']]) {
@@ -260,12 +326,16 @@ $('settingsForm').onsubmit = async event => {
             clearBaidu: $('clearBaidu').checked, clearGoogle: $('clearGoogle').checked,
             autoSpeak: $('autoSpeak').checked, speakTarget: 'source',
             programmerMode: $('programmerMode').checked, startAtLogin: $('startAtLogin').checked,
+            historyLimit: Number($('historyLimit').value),
+            historyDisplayLimit: Number($('historyDisplayLimit').value),
             voice: $('voice').value, rate: Number($('rate').value), shortcuts: readShortcuts(), showDockIcon: $('showDockIcon').checked });
         $('provider').value = settings.provider;
         invalidate();
         renderSettings();
-        $('saveStatus').textContent = '已保存';
-        $('saveStatus').classList.remove('error');
+        historyExpanded = false;
+        await refreshHistory();
+        $('saveStatus').textContent = settings.historyError || '已保存';
+        $('saveStatus').classList.toggle('error', Boolean(settings.historyError));
     } catch (error) { $('saveStatus').textContent = error.message; $('saveStatus').classList.add('error'); }
     finally { $('save').disabled = false; }
 };
@@ -301,6 +371,8 @@ async function init() {
     createShortcutFields();
     $('permissionHelp').textContent = initial.platform === 'darwin' ? 'macOS：划词需辅助功能／自动化权限；截图需屏幕录制权限。允许后如无法使用，请退出并重新启动。' : 'Windows：不能从权限更高的应用或禁止复制的控件中读取选区。请使用剪贴板或截图作为替代。';
     renderSettings();
+    api.onShown(() => { historyExpanded = false; void refreshHistory(); });
+    await refreshHistory();
     api.onAction(action => {
         if (action.type === 'text') void fillAndTranslate(action.text);
         else if (action.type === 'ocr-text' && ocrRevision === revision) void fillAndTranslate(action.text);

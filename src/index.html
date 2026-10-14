@@ -35,6 +35,11 @@
                 <div class="card-footer"><label class="toggle-row"><input id="autoSpeakQuick" type="checkbox"><span>自动朗读原文</span></label><span id="speechSummary">朗读原文</span></div>
             </article>
             <p id="status" role="status" class="status">准备就绪</p>
+            <section id="historySection" class="history-section" aria-label="翻译历史">
+                <div class="card-heading"><span>最近翻译</span><button id="toggleHistory" class="text-button" hidden>查看全部</button></div>
+                <div id="historyList" class="history-list"></div>
+                <p id="historyEmpty" class="muted">暂无翻译历史</p>
+            </section>
             <footer><span>快捷键 <kbd id="selectionShortcut"></kbd> 划词 · <kbd id="captureShortcut"></kbd> 截图</span></footer>
         </section>
         <section id="settingsView" hidden>
@@ -53,6 +58,12 @@
                 <div id="dockSettings" class="settings-card"><h2>程序坞</h2><p>默认仅在菜单栏常驻。修改后保存即可生效。</p>
                     <label class="check"><input id="showDockIcon" type="checkbox">在程序坞显示 Lingo 图标</label>
                 </div>
+                <div class="settings-card"><h2>翻译历史</h2><p>成功翻译的原文、译文和时间保存在本机。历史列表不重复显示当前输入框中的词条；切换词条或清空输入后，其已保存的记录会重新显示。</p>
+                    <label>最多保留条数<input id="historyLimit" type="number" min="1" max="1000" step="1" required></label>
+                    <p>默认 100 条，可设置 1–1000 条。调小后会删除超出上限的最旧记录。</p>
+                    <label>主界面显示条数<input id="historyDisplayLimit" type="number" min="1" max="100" step="1" required></label>
+                    <p>默认显示最近 5 条，可设置 1–100 条，按可用记录数量显示。点击记录可查看完整翻译。</p>
+                </div>
                 <div class="settings-card"><h2>翻译服务</h2><p>使用你自己的 API 凭据。调用额度与费用由服务商账户决定。</p>
                     <label>默认服务<select id="defaultProvider"><option value="baidu">百度翻译</option><option value="google">Google Cloud Translation</option></select></label>
                     <div class="service-heading"><strong>百度 · 通用文本翻译</strong><button type="button" id="baiduLink" class="text-button">申请 API ↗</button></div>
@@ -69,7 +80,7 @@
                     <div class="two-columns"><p>自动朗读固定使用原文。英文显示美式音标，中文显示带声调的拼音。</p><label>语速<select id="rate"><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1">1× 正常</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label></div>
                     <label>语音<select id="voice"><option value="">自动匹配推荐语音</option></select></label>
                 </div>
-                <div class="settings-card"><h2>使用与权限</h2><p>划词：先在其他应用选中文字，再按快捷键。需要应用支持复制；常见文字、图片剪贴板会尽量恢复，特殊格式可能无法完整保留。</p><p>截图：可在任意屏幕或跨屏拖动框选，显示十字光标与选区边框，不显示变暗遮罩；Esc 或右键取消。本机识别中英文，识别文字随后发送至所选服务翻译。</p><p id="permissionHelp"></p><p>关闭窗口后留在菜单栏／托盘，使用菜单中的“退出”结束运行。不保存翻译历史。</p></div>
+                <div class="settings-card"><h2>使用与权限</h2><p>划词：先在其他应用选中文字，再按快捷键。需要应用支持复制；常见文字、图片剪贴板会尽量恢复，特殊格式可能无法完整保留。</p><p>截图：可在任意屏幕或跨屏拖动框选，选区外压暗，光标旁显示坐标；Esc 或右键取消。本机识别中英文，识别文字随后发送至所选服务翻译。</p><p id="permissionHelp"></p><p>关闭窗口后留在菜单栏／托盘，使用菜单中的“退出”结束运行。翻译历史以文本形式保存在本机。</p></div>
                 <div class="save-bar"><span id="saveStatus" role="status">凭据由系统密钥机制加密后存于本机</span><button id="save" class="primary" type="submit">保存设置</button></div>
             </form>
         </section>

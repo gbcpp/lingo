@@ -78,6 +78,16 @@ class ScreenCapture {
                 clearTimeout(timeout);
             }));
             if (session !== this.session) return;
+            let lastPointer;
+            const updatePointer = () => {
+                const pointer = screen.getCursorScreenPoint();
+                if (lastPointer && pointer.x === lastPointer.x && pointer.y === lastPointer.y) return;
+                lastPointer = pointer;
+                for (const { win } of this.windows.values()) win.webContents.send('capture:pointer', pointer);
+            };
+            updatePointer();
+            // Pointer capture keeps events on the starting window when dragging across displays.
+            this.pointerTimer = setInterval(updatePointer, 32);
             for (const { win } of this.windows.values()) win.showInactive();
             const displayId = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).id;
             const target = [...this.windows.values()].find(entry => entry.display.id === displayId) || this.windows.values().next().value;
@@ -119,6 +129,7 @@ class ScreenCapture {
         this.paintSelection();
         if (rect.width < 1 || rect.height < 1) { this.cancel(); return; }
         this.composer = entry;
+        clearInterval(this.pointerTimer);
         const session = this.session;
         for (const { win } of this.windows.values()) win.hide();
         this.timer = setTimeout(() => { this.close(); this.onError('截图处理超时，请重试。'); }, 15000);
@@ -152,6 +163,7 @@ class ScreenCapture {
         this.active = false;
         this.session++;
         clearTimeout(this.timer);
+        clearInterval(this.pointerTimer);
         if (this.escapeRegistered) globalShortcut.unregister('Escape');
         this.escapeRegistered = false;
         this.origin = this.startPoint = this.composer = null;
