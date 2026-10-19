@@ -1,6 +1,6 @@
 {
     "name": "lingo-desktop",
-    "version": "0.1.15",
+    "version": "1.0.0",
     "description": "Cross-platform translation, local OCR and speech",
     "private": true,
     "author": "Lingo contributors",
