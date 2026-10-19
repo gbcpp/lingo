@@ -1,4 +1,5 @@
 const { createHash, randomBytes } = require('node:crypto');
+const { singleParagraph } = require('./text.js');
 
 const LANGUAGES = ['auto', 'zh', 'en', 'ja', 'ko', 'fr', 'de', 'es', 'ru'];
 const BAIDU_CODES = { ja: 'jp', ko: 'kor', fr: 'fra', es: 'spa' };
@@ -38,6 +39,7 @@ const baiduErrors = {
 
 async function translate(request, credentials, signal, fetcher = fetch) {
     validateRequest(request);
+    request = { ...request, text: singleParagraph(request.text) };
     let url;
     let options;
     if (request.provider === 'baidu') {
@@ -69,12 +71,12 @@ async function translate(request, credentials, signal, fetcher = fetch) {
         if (!Array.isArray(data.trans_result) || !data.trans_result.length ||
             data.trans_result.some(item => typeof item.dst !== 'string')) throw new Error('百度未返回有效译文。');
         const from = Object.keys(BAIDU_CODES).find(key => BAIDU_CODES[key] === data.from) || data.from;
-        return { text: data.trans_result.map(item => item.dst).join('\n'), from, to: request.to };
+        return { text: singleParagraph(data.trans_result.map(item => item.dst).join('\n')), from, to: request.to };
     }
     const result = data.data?.translations?.[0];
     if (typeof result?.translatedText !== 'string') throw new Error('Google 未返回有效译文。');
     const detected = result.detectedSourceLanguage || request.from;
-    return { text: result.translatedText, from: detected.startsWith('zh') ? 'zh' : detected, to: request.to };
+    return { text: singleParagraph(result.translatedText), from: detected.startsWith('zh') ? 'zh' : detected, to: request.to };
 }
 
 module.exports = { translate, baiduBody, validateRequest };

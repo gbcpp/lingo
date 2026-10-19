@@ -42,7 +42,7 @@ function send(channel, payload) {
     if (window && !window.isDestroyed()) window.webContents.send(channel, payload);
 }
 
-function show(action) {
+function show(action = { type: 'focus' }) {
     if (action?.type === 'text' && !action.text.trim()) return;
     fitWindow();
     window.show();
@@ -284,7 +284,8 @@ else {
         await applyDockPreference();
         await window.loadURL(page);
         const loginLaunch = !smoke && (process.argv.includes('--login-startup') || loginItemState(app).wasOpenedAtLogin);
-        if (!loginLaunch) show();
+        // Keep initialization messages when opening the initial empty window.
+        if (!loginLaunch) show(null);
     }).catch(error => { console.error('Application startup failed:', error); app.quit(); });
     app.on('activate', () => { if (window && !captureSession?.active && !ocrBusy && !selecting) show(); });
     app.on('before-quit', () => { quitting = true; cancelTranslation(); speech.stop(); captureSession?.close(); });

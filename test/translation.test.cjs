@@ -16,19 +16,22 @@ test('Baidu uses HTTPS POST, handles multiple segments and normalized language',
     const result = await translate(request, credentials, undefined, async (url, options) => {
         assert.equal(url, 'https://fanyi-api.baidu.com/api/trans/vip/translate');
         assert.equal(options.method, 'POST');
+        assert.equal(options.body.get('q'), '你好 & world second line');
+        assert.equal(options.body.get('sign'), createHash('md5').update(credentials.baidu.appId + options.body.get('q') + options.body.get('salt') + credentials.baidu.secret).digest('hex'));
         assert.ok(!url.includes('test-secret'));
-        return Response.json({ from: 'jp', trans_result: [{ dst: 'Hello' }, { dst: 'World' }] });
+        return Response.json({ from: 'jp', trans_result: [{ dst: 'Hello\r\nthere' }, { dst: 'World' }] });
     });
-    assert.deepEqual(result, { from: 'ja', to: 'en', text: 'Hello\nWorld' });
+    assert.deepEqual(result, { from: 'ja', to: 'en', text: 'Hello there World' });
+    assert.equal(request.text, '你好 & world\nsecond line');
 });
 test('Google omits automatic source and keeps API key out of the URL', async () => {
     const result = await translate({ ...request, provider: 'google', to: 'zh' }, credentials, undefined, async (url, options) => {
         assert.equal(url, 'https://translation.googleapis.com/language/translate/v2');
         assert.equal(options.headers['X-goog-api-key'], credentials.google.key);
-        assert.deepEqual(JSON.parse(options.body), { q: request.text, target: 'zh-CN', format: 'text' });
-        return Response.json({ data: { translations: [{ translatedText: '你好', detectedSourceLanguage: 'en' }] } });
+        assert.deepEqual(JSON.parse(options.body), { q: '你好 & world second line', target: 'zh-CN', format: 'text' });
+        return Response.json({ data: { translations: [{ translatedText: '你好\n世界', detectedSourceLanguage: 'en' }] } });
     });
-    assert.equal(result.text, '你好');
+    assert.equal(result.text, '你好 世界');
 });
 test('API errors and malformed responses are surfaced without echoing secrets', async () => {
     await assert.rejects(translate(request, credentials, undefined, async () => Response.json({ error_code: '54001', error_msg: 'test-secret' })), /签名错误/);

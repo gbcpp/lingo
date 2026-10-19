@@ -24,10 +24,18 @@ function loadMain(text, error) {
             webContents: { send: (channel, action) => { if (channel === 'action') events.push(action.type); } } };
         ready = true;
         captureSession = { active: false };
-        module.exports = shortcutActions;
+        module.exports = { ...shortcutActions, show: () => show(), startup: () => show(null) };
     `, context, { filename });
     return { actions: context.module.exports, events };
 }
+
+test('Explicit window opening requests an empty input while startup preserves initialization', () => {
+    const { actions, events } = loadMain('');
+    actions.input();
+    actions.show();
+    actions.startup();
+    assert.deepEqual(events, ['show', 'focus', 'show', 'focus', 'show']);
+});
 
 test('Empty selection and clipboard text do not show the translation window', async () => {
     for (const text of ['', ' \n\t']) {

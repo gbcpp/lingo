@@ -32,7 +32,7 @@ function renderHistory() {
             $('from').value = languages[entry.from] ? entry.from : 'auto';
             $('to').value = entry.to;
             invalidate();
-            result = { ...entry };
+            result = { ...entry, text: singleParagraph(entry.text) };
             $('output').textContent = result.text;
             $('detected').textContent = `${languages[result.from] || result.from} → ${languages[result.to] || result.to}`;
             $('speak').disabled = $('copy').disabled = false;
@@ -198,7 +198,7 @@ async function translate() {
         // A detached textarea decodes entities without rendering remote markup.
         const decoder = document.createElement('textarea');
         decoder.innerHTML = request.provider === 'google' ? translated.text.replaceAll('<', '&lt;') : '';
-        result = { ...translated, text: request.provider === 'google' ? decoder.value : translated.text, source: request.text };
+        result = { ...translated, text: singleParagraph(request.provider === 'google' ? decoder.value : translated.text), source: request.text };
         $('output').textContent = result.text;
         $('detected').textContent = `${languages[result.from] || result.from || '已检测'} → ${languages[result.to]}`;
         $('speak').disabled = false;
@@ -381,6 +381,7 @@ async function init() {
         else if (action.type === 'ocr-text' || action.type === 'ocr-error' || action.type === 'ocr-empty') return;
         else if (action.type === 'error') { switchView(false); status(action.text, true); }
         else if (action.type === 'settings') { renderSettings(); switchView(true); }
+        else if (action.type === 'focus') { switchView(false); $('clear').click(); }
         else if (action.type === 'ocr-start') { invalidate(); ocrRevision = revision; switchView(false); status('正在本机识别截图文字…'); }
         else { switchView(false); $('input').focus(); }
     });

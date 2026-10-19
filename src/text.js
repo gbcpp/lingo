@@ -1,3 +1,7 @@
+function singleParagraph(text) {
+    return text.replace(/\s*[\r\n\u2028\u2029]+\s*/gu, ' ').trim();
+}
+
 function normalizeCodeText(text) {
     return text.replace(/[^\p{L}\p{M}\p{N}\s]/gu, ' ')
         .replace(/[^\S\r\n]+/g, ' ').replace(/ *\r?\n */g, '\n').trim();
@@ -11,4 +15,4 @@ function translationTarget(text, from, to) {
     return chinese > english ? 'en' : 'zh';
 }
 
-if (typeof module !== 'undefined') module.exports = { normalizeCodeText, translationTarget };
+if (typeof module !== 'undefined') module.exports = { singleParagraph, normalizeCodeText, translationTarget };

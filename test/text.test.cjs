@@ -1,6 +1,13 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { normalizeCodeText, translationTarget } = require('../src/text.js');
+const { singleParagraph, normalizeCodeText, translationTarget } = require('../src/text.js');
+
+test('Merges line endings and blank lines without joining words or removing punctuation', () => {
+    assert.equal(singleParagraph('  Hello\r\n  world.\n\nNext\rline\u2028here\u2029too.  '), 'Hello world. Next line here too.');
+    assert.equal(singleParagraph('你好，\n世界。'), '你好， 世界。');
+    assert.equal(singleParagraph('Hello,  world!'), 'Hello,  world!');
+    assert.equal(singleParagraph('\r\n  \n'), '');
+});
 
 test('Programmer mode replaces comment markers and code separators with spaces', () => {
     assert.equal(normalizeCodeText('// get_user-name /* request->status != 200 */'), 'get user name request status 200');
